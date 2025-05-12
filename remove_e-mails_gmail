@@ -1,0 +1,35 @@
+function deleteOldEmailsAndEmptyTrash() {
+  // 1. Apagar e-mails com mais de 5 anos
+  var dataLimite = new Date();
+  dataLimite.setFullYear(dataLimite.getFullYear() - 5);
+  var query = 'before:' + Utilities.formatDate(dataLimite, Session.getScriptTimeZone(), 'yyyy/MM/dd');
+
+  var threads = GmailApp.search(query);
+  Logger.log("Movendo " + threads.length + " tópicos para a lixeira...");
+
+  for (let i = 0; i < threads.length; i += 100) {
+    var batch = threads.slice(i, i + 100);
+    GmailApp.moveThreadsToTrash(batch);
+  }
+
+  Logger.log("Todos os e-mails antigos foram movidos para a lixeira.");
+
+  // 2. Esvaziar a lixeira
+  Logger.log("Limpando a lixeira...");
+  var totalApagados = 0;
+  var lixeira;
+
+  do {
+    lixeira = GmailApp.getTrashThreads();
+    Logger.log("Apagando " + lixeira.length + " tópicos da lixeira...");
+
+    for (let j = 0; j < lixeira.length; j += 100) {
+      var lote = lixeira.slice(j, j + 100);
+      GmailApp.deleteThreads(lote);
+      totalApagados += lote.length;
+    }
+
+  } while (lixeira.length > 0);
+
+  Logger.log("Lixeira esvaziada com sucesso. Total de e-mails apagados permanentemente: " + totalApagados);
+}
